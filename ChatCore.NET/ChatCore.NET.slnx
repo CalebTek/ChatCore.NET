@@ -1,1 +1,6 @@
-<Solution />
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ChatCore.Abstractions/ChatCore.Abstractions.csproj" />
+    <Project Path="src/ChatCore.Core/ChatCore.Core.csproj" />
+  </Folder>
+</Solution>
