@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <Version>1.0.0</Version>
+    <Title>ChatCore.NET Core</Title>
+    <Description>Core engine implementation for ChatCore.NET</Description>
+    <PackageProjectUrl>https://github.com/CalebTek/ChatCore.NET</PackageProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../ChatCore.Abstractions/ChatCore.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>
