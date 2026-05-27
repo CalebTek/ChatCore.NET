@@ -1,6 +1,13 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/ChatCore.Abstractions/ChatCore.Abstractions.csproj" />
+    <Project Path="src/ChatCore.AspNetCore/ChatCore.AspNetCore.csproj" />
     <Project Path="src/ChatCore.Core/ChatCore.Core.csproj" />
+    <Project Path="src/ChatCore.Persistence.EFCore/ChatCore.Persistence.EFCore.csproj" />
+    <Project Path="src/ChatCore.RealTime.SignalR/ChatCore.RealTime.SignalR.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ChatCore.Tests.Integration/ChatCore.Tests.Integration.csproj" />
+    <Project Path="tests/ChatCore.Tests.Unit/ChatCore.Tests.Unit.csproj" />
   </Folder>
 </Solution>
