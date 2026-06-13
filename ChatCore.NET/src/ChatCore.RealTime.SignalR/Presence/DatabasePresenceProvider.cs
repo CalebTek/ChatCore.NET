@@ -34,8 +34,6 @@ public class DatabasePresenceProvider : IPresenceProvider
 
     public async Task<IEnumerable<Guid>> GetOnlineUsersAsync(CancellationToken cancellationToken = default)
     {
-        // This is a simplified implementation
-        // In production, you'd want to query distinct users
-        return Enumerable.Empty<Guid>();
+        return await _connections.GetDistinctOnlineUserIdsAsync(cancellationToken);
     }
 }
