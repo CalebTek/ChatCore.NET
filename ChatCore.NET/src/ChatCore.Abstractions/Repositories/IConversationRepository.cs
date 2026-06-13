@@ -36,6 +36,19 @@ public interface IConversationRepository
     Task<IEnumerable<Conversation>> GetByUserIdAsync(Guid userId, Guid tenantId, int skip, int take, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves participant user identifiers grouped by conversation identifier for a set of conversations.
+    /// Used to populate <see cref="ChatCore.Abstractions.DTOs.ConversationDto.ParticipantIds"/> without N+1 queries.
+    /// </summary>
+    /// <param name="conversationIds">The conversation identifiers to look up.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>
+    /// A dictionary mapping each conversation identifier to its list of participant user identifiers.
+    /// </returns>
+    Task<Dictionary<Guid, List<Guid>>> GetParticipantIdsByConversationIdsAsync(
+        IEnumerable<Guid> conversationIds,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Checks if a user is a participant in a conversation.
     /// </summary>
     /// <param name="conversationId">The conversation identifier.</param>
