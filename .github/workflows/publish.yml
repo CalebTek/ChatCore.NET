@@ -9,7 +9,12 @@ jobs:
   publish:
     name: Pack & Push
     runs-on: ubuntu-latest
+
+    # These two permissions are required for Trusted Publishing (OIDC).
+    # id-token: write  — lets the runner request a short-lived OIDC token from GitHub
+    # contents: read   — lets the runner check out the repository
     permissions:
+      id-token: write
       contents: read
 
     steps:
@@ -81,17 +86,18 @@ jobs:
           /p:Version=${{ steps.version.outputs.VERSION }}
           --output ./nupkgs
 
-      - name: Push all packages to NuGet.org
+      # Trusted Publishing — no API key needed.
+      # NuGet issues a short-lived OIDC token to this runner at push time.
+      # The token is validated against the trusted publisher config on nuget.org.
+      - name: Push packages to NuGet.org (Trusted Publishing)
         run: >
           dotnet nuget push "./nupkgs/*.nupkg"
-          --api-key ${{ secrets.NUGET_API_KEY }}
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
 
-      - name: Push symbol packages
+      - name: Push symbol packages to NuGet.org (Trusted Publishing)
         run: >
           dotnet nuget push "./nupkgs/*.snupkg"
-          --api-key ${{ secrets.NUGET_API_KEY }}
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
 
