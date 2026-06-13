@@ -9,18 +9,26 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-    <PackageReference Include="xunit" Version="2.6.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.1">
+    <PackageReference Include="Microsoft.NET.Test.Sdk"           Version="17.8.0" />
+    <PackageReference Include="xunit"                            Version="2.6.3" />
+    <PackageReference Include="xunit.analyzers"                  Version="1.27.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Moq" Version="4.20.69" />
+    <PackageReference Include="xunit.runner.visualstudio"        Version="2.5.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Moq"                              Version="4.20.69" />
+    <!-- Required for ChatCoreExceptionMiddlewareTests (DefaultHttpContext, MemoryStream body) -->
+    <PackageReference Include="Microsoft.AspNetCore.Http"        Version="2.2.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../src/ChatCore.Abstractions/ChatCore.Abstractions.csproj" />
     <ProjectReference Include="../../src/ChatCore.Core/ChatCore.Core.csproj" />
+    <ProjectReference Include="../../src/ChatCore.AspNetCore/ChatCore.AspNetCore.csproj" />
   </ItemGroup>
 
 </Project>
