@@ -12,12 +12,12 @@ using ChatCore.RealTime.SignalR.Hubs;
 public class SignalRTransportDispatcher : ITransportDispatcher
 {
     private readonly IHubContext<ChatHub> _hubContext;
-    private readonly IConversationRepository _conversations;
+    private readonly IUserConnectionRepository _connections;
 
-    public SignalRTransportDispatcher(IHubContext<ChatHub> hubContext, IConversationRepository conversations)
+    public SignalRTransportDispatcher(IHubContext<ChatHub> hubContext, IUserConnectionRepository connections)
     {
         _hubContext = hubContext;
-        _conversations = conversations;
+        _connections = connections;
     }
 
     public async Task DispatchAsync(
@@ -43,11 +43,24 @@ public class SignalRTransportDispatcher : ITransportDispatcher
                 message.IsDeleted
             };
 
-            // Send to all participants except sender
             if (excludeUserId.HasValue)
             {
-                await _hubContext.Clients.Group(groupName)
-                    .SendAsync("MessageReceived", messageData, cancellationToken);
+                // Resolve all active connection IDs for the excluded user and omit them
+                var excludedConnections = await _connections.GetByUserIdAsync(excludeUserId.Value, cancellationToken);
+                var excludedConnectionIds = excludedConnections.Select(c => c.ConnectionId).ToList();
+
+                if (excludedConnectionIds.Count > 0)
+                {
+                    await _hubContext.Clients
+                        .GroupExcept(groupName, excludedConnectionIds)
+                        .SendAsync("MessageReceived", messageData, cancellationToken);
+                }
+                else
+                {
+                    // Excluded user has no active connections — broadcast to everyone
+                    await _hubContext.Clients.Group(groupName)
+                        .SendAsync("MessageReceived", messageData, cancellationToken);
+                }
             }
             else
             {
