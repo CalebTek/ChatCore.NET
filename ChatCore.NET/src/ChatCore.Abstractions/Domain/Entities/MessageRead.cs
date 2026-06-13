@@ -16,6 +16,13 @@ public class MessageRead
     public Guid UserId { get; private set; }
 
     /// <summary>
+    /// Gets the tenant identifier.
+    /// Required to enforce the composite foreign key to <see cref="Conversation"/> (Id, TenantId),
+    /// which prevents cross-tenant read receipts from referencing another tenant's conversation.
+    /// </summary>
+    public Guid TenantId { get; private set; }
+
+    /// <summary>
     /// Gets the last read sequence number.
     /// </summary>
     public long LastReadSequence { get; private set; }
@@ -30,14 +37,16 @@ public class MessageRead
     /// </summary>
     /// <param name="conversationId">The conversation identifier.</param>
     /// <param name="userId">The user identifier.</param>
+    /// <param name="tenantId">The tenant identifier.</param>
     /// <param name="lastReadSequence">The last read sequence number.</param>
     /// <param name="readAt">The read timestamp.</param>
-    public MessageRead(Guid conversationId, Guid userId, long lastReadSequence, DateTime readAt)
+    public MessageRead(Guid conversationId, Guid userId, Guid tenantId, long lastReadSequence, DateTime readAt)
     {
-        ConversationId = conversationId;
-        UserId = userId;
+        ConversationId  = conversationId;
+        UserId          = userId;
+        TenantId        = tenantId;
         LastReadSequence = lastReadSequence;
-        ReadAt = readAt;
+        ReadAt          = readAt;
     }
 
     /// <summary>
@@ -48,7 +57,7 @@ public class MessageRead
     public void Update(long lastReadSequence, DateTime readAt)
     {
         LastReadSequence = lastReadSequence;
-        ReadAt = readAt;
+        ReadAt          = readAt;
     }
 
     /// <summary>
