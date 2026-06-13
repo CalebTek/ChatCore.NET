@@ -46,4 +46,12 @@ public class UserConnectionRepository : IUserConnectionRepository
         return await _context.UserConnections
             .AnyAsync(c => c.UserId == userId, cancellationToken);
     }
+
+    public async Task<IEnumerable<Guid>> GetDistinctOnlineUserIdsAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.UserConnections
+            .Select(c => c.UserId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+    }
 }
