@@ -45,6 +45,22 @@ public class ConversationRepository : IConversationRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<Dictionary<Guid, List<Guid>>> GetParticipantIdsByConversationIdsAsync(
+        IEnumerable<Guid> conversationIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = conversationIds.ToList();
+
+        var rows = await _context.Participants
+            .Where(p => ids.Contains(p.ConversationId))
+            .Select(p => new { p.ConversationId, p.UserId })
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .GroupBy(r => r.ConversationId)
+            .ToDictionary(g => g.Key, g => g.Select(r => r.UserId).ToList());
+    }
+
     public async Task<bool> IsUserParticipantAsync(Guid conversationId, Guid userId, Guid tenantId, CancellationToken cancellationToken = default)
     {
         return await _context.Participants
