@@ -4,6 +4,7 @@ using ChatCore.Abstractions.Domain.Entities;
 using ChatCore.Abstractions.Repositories;
 using ChatCore.Abstractions.Transport;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using ChatCore.RealTime.SignalR.Hubs;
 
 /// <summary>
@@ -11,27 +12,31 @@ using ChatCore.RealTime.SignalR.Hubs;
 /// </summary>
 public class SignalRTransportDispatcher : ITransportDispatcher
 {
-    private readonly IHubContext<ChatHub> _hubContext;
-    private readonly IUserConnectionRepository _connections;
+    private readonly IHubContext<ChatHub>         _hubContext;
+    private readonly IUserConnectionRepository    _connections;
+    private readonly ILogger<SignalRTransportDispatcher> _logger;
 
-    public SignalRTransportDispatcher(IHubContext<ChatHub> hubContext, IUserConnectionRepository connections)
+    public SignalRTransportDispatcher(
+        IHubContext<ChatHub>              hubContext,
+        IUserConnectionRepository         connections,
+        ILogger<SignalRTransportDispatcher> logger)
     {
-        _hubContext = hubContext;
+        _hubContext  = hubContext;
         _connections = connections;
+        _logger      = logger;
     }
 
     public async Task DispatchAsync(
         ChatMessage message,
-        Guid conversationId,
-        Guid tenantId,
-        Guid? excludeUserId = null,
+        Guid        conversationId,
+        Guid        tenantId,
+        Guid?       excludeUserId     = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
             var groupName = $"conversation_{conversationId}";
 
-            // Map message to DTO for transport
             var messageData = new
             {
                 message.Id,
@@ -45,8 +50,7 @@ public class SignalRTransportDispatcher : ITransportDispatcher
 
             if (excludeUserId.HasValue)
             {
-                // Resolve all active connection IDs for the excluded user and omit them
-                var excludedConnections = await _connections.GetByUserIdAsync(excludeUserId.Value, cancellationToken);
+                var excludedConnections  = await _connections.GetByUserIdAsync(excludeUserId.Value, cancellationToken);
                 var excludedConnectionIds = excludedConnections.Select(c => c.ConnectionId).ToList();
 
                 if (excludedConnectionIds.Count > 0)
@@ -57,7 +61,6 @@ public class SignalRTransportDispatcher : ITransportDispatcher
                 }
                 else
                 {
-                    // Excluded user has no active connections — broadcast to everyone
                     await _hubContext.Clients.Group(groupName)
                         .SendAsync("MessageReceived", messageData, cancellationToken);
                 }
@@ -70,8 +73,9 @@ public class SignalRTransportDispatcher : ITransportDispatcher
         }
         catch (Exception ex)
         {
-            // Log dispatch errors but don't throw
-            System.Diagnostics.Debug.WriteLine($"Error dispatching message: {ex.Message}");
+            _logger.LogError(ex,
+                "Failed to dispatch message {MessageId} to conversation {ConversationId}",
+                message.Id, conversationId);
         }
     }
 }
