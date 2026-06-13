@@ -1,42 +1,59 @@
 # ChatCore.NET Documentation
 
-Welcome to the complete documentation index for **ChatCore.NET** — a modular, scalable, SignalR-powered chat framework for .NET.
+Welcome to the complete documentation for **ChatCore.NET** — a modular, scalable, SignalR-powered chat framework for .NET 8.
 
-This documentation is organized to help you understand the architecture, structure, setup, and implementation details of the ChatCore.NET project.
+---
 
-## 📚 Documentation Files
+## 📚 Documentation Index
 
 ### Getting Started
-- **[01-architecture-overview.md](./01-architecture-overview.md)** - System layers, data flow, and design decisions
-- **[02-project-structure.md](./02-project-structure.md)** - Directory layout, module dependencies, and file organization
-- **[03-quick-start-guide.md](./03-quick-start-guide.md)** - Installation, setup, and usage examples
 
-### Core Concepts & Reference
-- **[04-domain-models.md](./04-domain-models.md)** - Complete reference for all domain entities (Conversation, Message, Participant, etc.)
+| File | Description |
+|------|-------------|
+| [01-architecture-overview.md](./01-architecture-overview.md) | System layers, data flow, and key design decisions |
+| [02-project-structure.md](./02-project-structure.md) | Directory layout and module dependencies |
+| [03-quick-start-guide.md](./03-quick-start-guide.md) | Installation, wiring, and first messages |
 
-## 🎯 Quick Navigation
+### Core Reference
 
-**New to ChatCore.NET?** Start with [01-architecture-overview.md](./01-architecture-overview.md) to understand the big picture.
+| File | Description |
+|------|-------------|
+| [04-domain-models.md](./04-domain-models.md) | All domain entities, enums, DTOs, and relationships |
+| [05-signalr-hub-reference.md](./05-signalr-hub-reference.md) | Hub methods, server-push events, client connection setup |
+| [06-api-endpoints.md](./06-api-endpoints.md) | `IChatEngine` operations, request/response shapes, error codes |
 
-**Ready to set up?** Jump to [03-quick-start-guide.md](./03-quick-start-guide.md) for installation and setup instructions.
+### Infrastructure & Quality
 
-**Need to understand data models?** See [04-domain-models.md](./04-domain-models.md) for all entity definitions.
+| File | Description |
+|------|-------------|
+| [07-database-schema.md](./07-database-schema.md) | Table definitions, indexes, EF Core config, migrations |
+| [08-testing-strategies.md](./08-testing-strategies.md) | Unit tests, integration tests, conventions, coverage gaps |
+| [09-configuration.md](./09-configuration.md) | Registration, connection strings, auth, interceptors, Docker |
 
-**Exploring the codebase?** Check [02-project-structure.md](./02-project-structure.md) for directory organization and module dependencies.
+### Community
+
+| File | Description |
+|------|-------------|
+| [10-contributing-guidelines.md](./10-contributing-guidelines.md) | Branching, PR process, coding standards, test requirements |
+| [../CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) | Community standards and enforcement |
+| [../TROUBLESHOOTING.md](../TROUBLESHOOTING.md) | Common errors and solutions |
 
 ---
 
-## 📖 Additional Documentation (Coming Soon)
+## 🗺️ Where to Start
 
-More documentation files will be added as the project develops, covering:
-- API endpoints and usage
-- SignalR hub implementations
-- Database schema and migrations
-- Authentication and authorization
-- Testing strategies
-- Deployment and configuration
-- Contributing guidelines
+**"What is this and how does it work?"** → [01-architecture-overview.md](./01-architecture-overview.md)
+
+**"I want to get it running in my app."** → [03-quick-start-guide.md](./03-quick-start-guide.md) → [09-configuration.md](./09-configuration.md)
+
+**"What SignalR events does the client need to listen for?"** → [05-signalr-hub-reference.md](./05-signalr-hub-reference.md)
+
+**"What does the engine return and what error codes exist?"** → [06-api-endpoints.md](./06-api-endpoints.md)
+
+**"How do I write or run tests?"** → [08-testing-strategies.md](./08-testing-strategies.md)
+
+**"I want to contribute."** → [10-contributing-guidelines.md](./10-contributing-guidelines.md)
 
 ---
 
-**Last Updated:** May 29, 2026
+**Last Updated:** June 13, 2026
