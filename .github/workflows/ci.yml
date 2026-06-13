@@ -15,34 +15,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0        # required for Source Link
+          fetch-depth: 0
 
-      - name: Setup .NET
+      - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
-      - name: Restore dependencies
+      - name: Restore
         run: dotnet restore ChatCore.NET/ChatCore.NET.slnx
 
       - name: Build
-        run: dotnet build ChatCore.NET/ChatCore.NET.slnx --no-restore --configuration Release
+        run: |
+          dotnet build ChatCore.NET/ChatCore.NET.slnx \
+            --no-restore \
+            --configuration Release
 
-      - name: Run unit tests
-        run: >
-          dotnet test ChatCore.NET/tests/ChatCore.Tests.Unit/ChatCore.Tests.Unit.csproj
-          --no-build
-          --configuration Release
-          --logger "trx;LogFileName=unit-results.trx"
-          --results-directory ./test-results
+      - name: Unit tests
+        run: |
+          dotnet test ChatCore.NET/tests/ChatCore.Tests.Unit/ChatCore.Tests.Unit.csproj \
+            --configuration Release \
+            --no-build \
+            --logger "trx;LogFileName=unit-results.trx" \
+            --results-directory ./test-results
 
-      - name: Run integration tests
-        run: >
-          dotnet test ChatCore.NET/tests/ChatCore.Tests.Integration/ChatCore.Tests.Integration.csproj
-          --no-build
-          --configuration Release
-          --logger "trx;LogFileName=integration-results.trx"
-          --results-directory ./test-results
+      - name: Integration tests
+        run: |
+          dotnet test ChatCore.NET/tests/ChatCore.Tests.Integration/ChatCore.Tests.Integration.csproj \
+            --configuration Release \
+            --no-build \
+            --logger "trx;LogFileName=integration-results.trx" \
+            --results-directory ./test-results
 
       - name: Upload test results
         if: always()
