@@ -1,20 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <LangVersion>latest</LangVersion>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Version>1.0.0</Version>
+    <PackageId>ChatCore.Persistence.EFCore</PackageId>
     <Title>ChatCore.NET Entity Framework Core</Title>
-    <Description>Entity Framework Core persistence layer for ChatCore.NET</Description>
-    <PackageProjectUrl>https://github.com/CalebTek/ChatCore.NET</PackageProjectUrl>
+    <Description>SQL Server persistence layer for ChatCore.NET built on Entity Framework Core 8. Provides IConversationRepository, IMessageRepository, IReadReceiptRepository, and IUserConnectionRepository implementations with seek-based pagination, composite tenant isolation keys, and idempotency-key deduplication.</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="ChatCore.Abstractions"              Version="$(Version)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore"      Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
+    <!-- Tools package is design-time only — not shipped to consumers -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -22,7 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../ChatCore.Abstractions/ChatCore.Abstractions.csproj" />
+    <None Include="$(MSBuildThisFileDirectory)..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="$(MSBuildThisFileDirectory)..\..\icon.png"  Pack="true" PackagePath="\" Condition="Exists('$(MSBuildThisFileDirectory)..\..\icon.png')" />
   </ItemGroup>
 
 </Project>
