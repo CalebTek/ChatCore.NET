@@ -2,164 +2,154 @@
 
 > A modular, scalable, SignalR-powered chat framework for .NET
 
+[![NuGet](https://img.shields.io/nuget/v/ChatCore.AspNetCore.svg)](https://www.nuget.org/packages/ChatCore.AspNetCore)
+[![CI](https://github.com/CalebTek/ChatCore.NET/actions/workflows/ci.yml/badge.svg)](https://github.com/CalebTek/ChatCore.NET/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 ## 🎯 Overview
 
-ChatCore.NET is an enterprise-grade, production-ready chat engine designed for .NET applications. It provides a clean, pluggable abstraction over real-time communication with support for 1:1 and group conversations, read receipts, presence tracking, and horizontal scaling.
+ChatCore.NET is an enterprise-grade chat engine for .NET 8 applications. It provides a clean, pluggable abstraction over real-time communication with support for 1:1 and group conversations, read receipts, presence tracking, and horizontal scaling.
 
 ## ✨ Features
 
-- **Modular Architecture** - Clean separation of concerns with pluggable storage and transport layers
-- **Real-Time Delivery** - Built-in SignalR integration with fallback support
-- **Multi-Tenancy Ready** - Tenant isolation from the ground up
-- **Message Ordering Guarantee** - Sequence-based ordering for consistency
-- **Read Receipts** - Track message read status per user
-- **Presence Tracking** - Online/offline status with multi-connection support
-- **Soft Deletes** - Preserve message history while allowing deletion
-- **Idempotency** - Prevent duplicate messages with idempotency keys
-- **Extensibility** - Middleware-style interceptor pipeline for custom logic
-- **Scalable** - Seek-based pagination and Redis backplane support
+- **Modular Architecture** — clean separation of concerns with pluggable storage and transport layers
+- **Real-Time Delivery** — built-in SignalR integration with automatic sender exclusion
+- **Multi-Tenancy Ready** — tenant isolation enforced at every layer including composite foreign keys
+- **Message Ordering Guarantee** — atomic sequence-number assignment per conversation
+- **Read Receipts** — high-water-mark tracking per user per conversation
+- **Presence Tracking** — online/offline status with multi-connection support
+- **Soft Deletes** — message content replaced with `[deleted]`, record retained for audit
+- **Idempotency** — prevent duplicate sends with a client-supplied idempotency key
+- **Interceptor Pipeline** — middleware-style hooks before and after every send
+- **Seek-based Pagination** — cursor pagination on sequence numbers — no `OFFSET` scans
+- **Global Exception Handling** — structured JSON error responses from a single middleware
 
-## 🏗️ Architecture
+## 📦 Packages
 
-### Packages
-
-- **ChatCore.Abstractions** - Core domain models, interfaces, and contracts
-- **ChatCore.Core** - Engine implementation and business logic
-- **ChatCore.Persistence.EFCore** - Entity Framework Core storage layer (coming soon)
-- **ChatCore.RealTime.SignalR** - SignalR transport implementation (coming soon)
-- **ChatCore.AspNetCore** - ASP.NET Core integration and DI setup (coming soon)
-
-### Core Concepts
-
-#### Conversations
-- Direct (1:1) conversations
-- Group conversations with unlimited participants
-- Composite key: `(ConversationId, TenantId)`
-
-#### Messages
-- Atomic sequence numbering for ordering guarantee
-- Soft delete support for compliance
-- Idempotency key for duplicate prevention
-- Seekable pagination for infinite scalability
-
-#### Presence
-- Multi-connection per user
-- Online/offline tracking
-- Redis-backed optional
-
-#### Read Receipts
-- Track last read sequence per user/conversation
-- Efficient single-value update model
+| Package | Description |
+|---------|-------------|
+| [`ChatCore.Abstractions`](https://www.nuget.org/packages/ChatCore.Abstractions) | Domain models, interfaces, contracts — no infrastructure dependencies |
+| [`ChatCore.Core`](https://www.nuget.org/packages/ChatCore.Core) | `ChatEngine` implementation and interceptor pipeline |
+| [`ChatCore.Persistence.EFCore`](https://www.nuget.org/packages/ChatCore.Persistence.EFCore) | SQL Server repositories via EF Core 8 |
+| [`ChatCore.RealTime.SignalR`](https://www.nuget.org/packages/ChatCore.RealTime.SignalR) | SignalR hub, transport dispatcher, presence provider |
+| [`ChatCore.AspNetCore`](https://www.nuget.org/packages/ChatCore.AspNetCore) | ASP.NET Core integration — the only package most apps need |
 
 ## 🚀 Quick Start
 
-*(Coming soon - package will be available on NuGet)*
+### 1. Install
+
+```bash
+dotnet add package ChatCore.AspNetCore
+```
+
+### 2. Register services
 
 ```csharp
-// 1. Register services
-services
+// Program.cs
+builder.Services
     .AddChatCore()
-    .UseEntityFramework<AppDbContext>()
-    .UseSignalR();
+    .UseEntityFramework(connectionString)
+    .UseSignalR()
+    .Build();
+```
 
-// 2. Map hub endpoint
-app.MapChatHub("/chat");
+### 3. Map the hub and middleware
 
-// 3. Inject and use
-var engine = serviceProvider.GetRequiredService<IChatEngine>();
-var result = await engine.SendAsync(new ChatMessageRequest
+```csharp
+app.UseChatCoreExceptionHandler();  // global exception handler — register first
+app.UseCors("ChatCoreCors");        // required for browser SignalR clients
+app.MapChatHub("/hubs/chat");
+```
+
+### 4. Send a message
+
+```csharp
+public class MessagesController : ControllerBase
 {
-    ConversationId = conversationId,
-    SenderId = userId,
-    TenantId = tenantId,
-    Content = "Hello, World!"
-});
+    private readonly IChatEngine _engine;
+    public MessagesController(IChatEngine engine) => _engine = engine;
+
+    [HttpPost("{conversationId}/messages")]
+    public async Task<IActionResult> Send(Guid conversationId, [FromBody] SendBody body)
+    {
+        var result = await _engine.SendAsync(new ChatMessageRequest
+        {
+            ConversationId = conversationId,
+            SenderId       = User.GetUserId(),
+            TenantId       = User.GetTenantId(),
+            Content        = body.Content,
+            IdempotencyKey = body.IdempotencyKey
+        });
+        return result.IsSuccess ? Ok(result.Data) : BadRequest(result.Error);
+    }
+}
 ```
 
-## 🏛️ Project Structure
+### 5. Connect from JavaScript
 
-```
-src/
-├── ChatCore.Abstractions/      # Domain models & interfaces
-├── ChatCore.Core/              # Engine & implementations
-├── ChatCore.Persistence.EFCore # Database layer (planned)
-├── ChatCore.RealTime.SignalR   # Real-time transport (planned)
-└── ChatCore.AspNetCore         # Integration layer (planned)
+```typescript
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/hubs/chat", { accessTokenFactory: () => yourJwtToken })
+    .withAutomaticReconnect()
+    .build();
 
-test/
-├── ChatCore.Tests.Unit         # Unit tests
-└── ChatCore.Tests.Integration  # Integration tests
+connection.on("MessageReceived", (message) => console.log(message));
+
+await connection.start();
+await connection.invoke("JoinConversation", conversationId);
+await connection.invoke("SendMessage", conversationId, "Hello!", tenantId);
 ```
+
+## 📚 Documentation
+
+Full documentation is in the [`docs/`](docs/) folder:
+
+| Doc | Description |
+|-----|-------------|
+| [Architecture Overview](docs/01-architecture-overview.md) | Layers, data flow, design decisions |
+| [Project Structure](docs/02-project-structure.md) | Directory layout, dependency graph |
+| [Quick Start Guide](docs/03-quick-start-guide.md) | Step-by-step setup |
+| [Domain Models](docs/04-domain-models.md) | Entity and DTO reference |
+| [SignalR Hub Reference](docs/05-signalr-hub-reference.md) | All hub methods and events |
+| [API Endpoints](docs/06-api-endpoints.md) | Request/response contracts, error codes |
+| [Database Schema](docs/07-database-schema.md) | Tables, indexes, migrations |
+| [Testing Strategies](docs/08-testing-strategies.md) | Unit and integration test guide |
+| [Configuration](docs/09-configuration.md) | Redis, auth, Docker, health checks |
+| [Contributing](docs/10-contributing-guidelines.md) | Branch strategy, PR process, standards |
 
 ## 🔐 Design Principles
 
-1. **Storage Agnostic** - Swap storage implementations without changing the engine
-2. **Transport Agnostic** - Support multiple real-time transport options
-3. **Multi-Tenant by Default** - Every entity includes tenant isolation
-4. **Ordering Guarantee** - Sequence numbers ensure message ordering
-5. **Scalability First** - Seek-based pagination and stateless design
-6. **Extensible** - Interceptor pipeline for cross-cutting concerns
-7. **Test Friendly** - Interface-based design for dependency injection
-
-## 📊 Database Schema (Planned)
-
-```sql
--- Conversations
-CREATE TABLE Conversations (
-    Id UNIQUEIDENTIFIER PRIMARY KEY,
-    Type INT NOT NULL,
-    TenantId UNIQUEIDENTIFIER NOT NULL,
-    CreatedAt DATETIME2 NOT NULL,
-    LastSequenceNumber BIGINT NOT NULL,
-    UNIQUE (Id, TenantId)
-);
-
--- Messages (clustered by Conversation + Sequence)
-CREATE TABLE Messages (
-    Id UNIQUEIDENTIFIER,
-    ConversationId UNIQUEIDENTIFIER NOT NULL,
-    SenderId UNIQUEIDENTIFIER NOT NULL,
-    TenantId UNIQUEIDENTIFIER NOT NULL,
-    Content NVARCHAR(MAX) NOT NULL,
-    SequenceNumber BIGINT NOT NULL,
-    SentAt DATETIME2 NOT NULL,
-    IsDeleted BIT NOT NULL,
-    IdempotencyKey NVARCHAR(100),
-    PRIMARY KEY (ConversationId, SequenceNumber)
-);
-
--- Read Receipts
-CREATE TABLE MessageReads (
-    ConversationId UNIQUEIDENTIFIER NOT NULL,
-    UserId UNIQUEIDENTIFIER NOT NULL,
-    LastReadSequence BIGINT NOT NULL,
-    ReadAt DATETIME2 NOT NULL,
-    PRIMARY KEY (ConversationId, UserId)
-);
-```
+1. **Storage Agnostic** — swap storage behind an interface without touching the engine
+2. **Transport Agnostic** — SignalR today, anything tomorrow
+3. **Multi-Tenant by Default** — every entity carries `TenantId`, enforced at the database FK level
+4. **Ordering Guarantee** — atomic sequence numbers per conversation
+5. **Scalability First** — seek pagination, stateless design, Redis backplane support
+6. **Extensible** — interceptor pipeline for content filtering, audit logging, rate limiting
+7. **Test Friendly** — interface-driven, 70+ tests across unit and integration suites
 
 ## 📝 Roadmap
 
 - [x] Core abstractions and domain models
-- [x] ChatEngine implementation
-- [ ] Entity Framework Core persistence layer
-- [ ] SignalR transport implementation
-- [ ] ASP.NET Core integration
-- [ ] Unit and integration tests
-- [ ] NuGet package release
+- [x] ChatEngine with full send / read / paginate / delete
+- [x] Entity Framework Core persistence layer
+- [x] SignalR transport with correct sender exclusion
+- [x] ASP.NET Core integration and DI builder
+- [x] Unit and integration tests (70+ tests)
+- [x] Global exception middleware
+- [x] NuGet package release
 - [ ] Redis backplane support
-- [ ] Multi-tenant admin dashboard
 - [ ] Message encryption layer
-- [ ] Webhook support for external systems
+- [ ] Webhook support for external integrations
+- [ ] Multi-tenant admin dashboard
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow the established architecture patterns.
+Contributions are welcome! See [docs/10-contributing-guidelines.md](docs/10-contributing-guidelines.md) for the full guide.
 
 ## 📄 License
 
-MIT License - see LICENSE file for details
+MIT — see [LICENSE](LICENSE) for details.
 
 ## 👨‍💻 Author
 
-CalebTek - [GitHub](https://github.com/CalebTek)
+CalebTek — [GitHub](https://github.com/CalebTek)
