@@ -3,103 +3,80 @@ name: Publish to NuGet
 on:
   push:
     tags:
-      - "v*.*.*"        # triggers on v1.0.0, v1.2.3-beta.1, etc.
+      - "v[0-9]+.[0-9]+.[0-9]+"        # v1.0.0, v1.2.3 — strict semver only
+      - "v[0-9]+.[0-9]+.[0-9]+-*"      # v1.0.0-beta.1 — pre-release
 
 jobs:
   publish:
     name: Pack & Push
     runs-on: ubuntu-latest
 
-    # These two permissions are required for Trusted Publishing (OIDC).
-    # id-token: write  — lets the runner request a short-lived OIDC token from GitHub
-    # contents: read   — lets the runner check out the repository
     permissions:
-      id-token: write
+      id-token: write   # required for NuGet Trusted Publishing (OIDC)
       contents: read
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0        # required for Source Link git metadata
+          fetch-depth: 0    # full history required for Source Link
 
-      - name: Setup .NET
+      - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
       - name: Extract version from tag
         id: version
-        # Strip leading 'v' so v1.0.0 → 1.0.0
+        # Strip leading 'v': v1.0.0 → 1.0.0
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
       - name: Restore
         run: dotnet restore ChatCore.NET/ChatCore.NET.slnx
 
       - name: Build
-        run: >
-          dotnet build ChatCore.NET/ChatCore.NET.slnx
-          --no-restore
-          --configuration Release
-          /p:Version=${{ steps.version.outputs.VERSION }}
-          /p:CI=true
+        run: |
+          dotnet build ChatCore.NET/ChatCore.NET.slnx \
+            --no-restore \
+            --configuration Release \
+            /p:Version=${{ steps.version.outputs.VERSION }} \
+            /p:CI=true
 
-      - name: Run tests
-        run: >
-          dotnet test ChatCore.NET/ChatCore.NET.slnx
-          --no-build
-          --configuration Release
-          /p:Version=${{ steps.version.outputs.VERSION }}
+      - name: Test
+        run: |
+          dotnet test ChatCore.NET/ChatCore.NET.slnx \
+            --no-build \
+            --configuration Release \
+            /p:Version=${{ steps.version.outputs.VERSION }}
 
-      - name: Pack — ChatCore.Abstractions
-        run: >
-          dotnet pack ChatCore.NET/src/ChatCore.Abstractions/ChatCore.Abstractions.csproj
-          --no-build --configuration Release
-          /p:Version=${{ steps.version.outputs.VERSION }}
-          --output ./nupkgs
+      - name: Pack all packages
+        run: |
+          for proj in \
+            ChatCore.NET/src/ChatCore.Abstractions/ChatCore.Abstractions.csproj \
+            ChatCore.NET/src/ChatCore.Core/ChatCore.Core.csproj \
+            ChatCore.NET/src/ChatCore.Persistence.EFCore/ChatCore.Persistence.EFCore.csproj \
+            ChatCore.NET/src/ChatCore.RealTime.SignalR/ChatCore.RealTime.SignalR.csproj \
+            ChatCore.NET/src/ChatCore.AspNetCore/ChatCore.AspNetCore.csproj; do
+            dotnet pack "$proj" \
+              --no-build \
+              --configuration Release \
+              /p:Version=${{ steps.version.outputs.VERSION }} \
+              --output ./nupkgs
+          done
 
-      - name: Pack — ChatCore.Core
-        run: >
-          dotnet pack ChatCore.NET/src/ChatCore.Core/ChatCore.Core.csproj
-          --no-build --configuration Release
-          /p:Version=${{ steps.version.outputs.VERSION }}
-          --output ./nupkgs
+      - name: Push to NuGet.org (Trusted Publishing / OIDC)
+        run: |
+          dotnet nuget push "./nupkgs/*.nupkg" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key oidc \
+            --skip-duplicate
 
-      - name: Pack — ChatCore.Persistence.EFCore
-        run: >
-          dotnet pack ChatCore.NET/src/ChatCore.Persistence.EFCore/ChatCore.Persistence.EFCore.csproj
-          --no-build --configuration Release
-          /p:Version=${{ steps.version.outputs.VERSION }}
-          --output ./nupkgs
-
-      - name: Pack — ChatCore.RealTime.SignalR
-        run: >
-          dotnet pack ChatCore.NET/src/ChatCore.RealTime.SignalR/ChatCore.RealTime.SignalR.csproj
-          --no-build --configuration Release
-          /p:Version=${{ steps.version.outputs.VERSION }}
-          --output ./nupkgs
-
-      - name: Pack — ChatCore.AspNetCore
-        run: >
-          dotnet pack ChatCore.NET/src/ChatCore.AspNetCore/ChatCore.AspNetCore.csproj
-          --no-build --configuration Release
-          /p:Version=${{ steps.version.outputs.VERSION }}
-          --output ./nupkgs
-
-      # Trusted Publishing — no API key needed.
-      # NuGet issues a short-lived OIDC token to this runner at push time.
-      # The token is validated against the trusted publisher config on nuget.org.
-      - name: Push packages to NuGet.org (Trusted Publishing)
-        run: >
-          dotnet nuget push "./nupkgs/*.nupkg"
-          --source https://api.nuget.org/v3/index.json
-          --skip-duplicate
-
-      - name: Push symbol packages to NuGet.org (Trusted Publishing)
-        run: >
-          dotnet nuget push "./nupkgs/*.snupkg"
-          --source https://api.nuget.org/v3/index.json
-          --skip-duplicate
+      - name: Push symbol packages
+        run: |
+          dotnet nuget push "./nupkgs/*.snupkg" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key oidc \
+            --skip-duplicate
 
       - name: Upload packages as artifact
         uses: actions/upload-artifact@v4
