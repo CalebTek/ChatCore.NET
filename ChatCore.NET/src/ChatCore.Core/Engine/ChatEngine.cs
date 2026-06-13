@@ -163,6 +163,7 @@ public class ChatEngine : IChatEngine
             var read = new MessageRead(
                 request.ConversationId,
                 request.UserId,
+                request.TenantId,
                 request.LastReadSequence,
                 now);
 
@@ -227,11 +228,20 @@ public class ChatEngine : IChatEngine
                 query.PageSize,
                 cancellationToken);
 
-            var dtos = conversations.Select(c => new ConversationDto
+            var conversationList = conversations.ToList();
+
+            // Fetch all participant IDs in a single batch query — no N+1
+            var conversationIds = conversationList.Select(c => c.Id);
+            var participantMap = await _conversations.GetParticipantIdsByConversationIdsAsync(
+                conversationIds,
+                cancellationToken);
+
+            var dtos = conversationList.Select(c => new ConversationDto
             {
-                Id = c.Id,
-                Type = c.Type,
-                CreatedAt = c.CreatedAt
+                Id             = c.Id,
+                Type           = c.Type,
+                CreatedAt      = c.CreatedAt,
+                ParticipantIds = participantMap.TryGetValue(c.Id, out var ids) ? ids : []
             });
 
             return ChatResult<IEnumerable<ConversationDto>>.Success(dtos);
@@ -279,13 +289,13 @@ public class ChatEngine : IChatEngine
     {
         return new ChatMessageDto
         {
-            Id = message.Id,
+            Id             = message.Id,
             ConversationId = message.ConversationId,
-            SenderId = message.SenderId,
-            Content = message.Content,
+            SenderId       = message.SenderId,
+            Content        = message.Content,
             SequenceNumber = message.SequenceNumber,
-            SentAt = message.SentAt,
-            IsDeleted = message.IsDeleted
+            SentAt         = message.SentAt,
+            IsDeleted      = message.IsDeleted
         };
     }
 }
