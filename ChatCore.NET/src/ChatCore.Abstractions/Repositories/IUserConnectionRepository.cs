@@ -39,4 +39,11 @@ public interface IUserConnectionRepository
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>True if the user is online; otherwise, false.</returns>
     Task<bool> IsUserOnlineAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves the distinct set of user identifiers that currently have at least one active connection.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A collection of online user identifiers with no duplicates.</returns>
+    Task<IEnumerable<Guid>> GetDistinctOnlineUserIdsAsync(CancellationToken cancellationToken = default);
 }
