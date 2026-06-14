@@ -13,22 +13,11 @@ public class MessageReadConfiguration : IEntityTypeConfiguration<MessageRead>
     {
         builder.HasKey(r => new { r.ConversationId, r.UserId });
 
-        builder.Property(r => r.ConversationId)
-            .IsRequired();
-
-        builder.Property(r => r.UserId)
-            .IsRequired();
-
-        // TenantId is stored on MessageRead so the FK can reference the composite
-        // (ConversationId, TenantId) PK on Conversation, preventing cross-tenant reads.
-        builder.Property(r => r.TenantId)
-            .IsRequired();
-
-        builder.Property(r => r.LastReadSequence)
-            .IsRequired();
-
-        builder.Property(r => r.ReadAt)
-            .IsRequired();
+        builder.Property(r => r.ConversationId).IsRequired();
+        builder.Property(r => r.UserId).IsRequired();
+        builder.Property(r => r.TenantId).IsRequired();
+        builder.Property(r => r.LastReadSequence).IsRequired();
+        builder.Property(r => r.ReadAt).IsRequired();
 
         builder.HasIndex(r => r.UserId);
 
@@ -36,6 +25,7 @@ public class MessageReadConfiguration : IEntityTypeConfiguration<MessageRead>
         builder.HasOne<Conversation>()
             .WithMany()
             .HasForeignKey(r => new { r.ConversationId, r.TenantId })
+            .HasPrincipalKey(c => new { c.Id, c.TenantId })
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
