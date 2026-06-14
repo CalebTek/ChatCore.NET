@@ -12,10 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ChatCore.Abstractions"       Version="$(Version)" />
-    <PackageReference Include="ChatCore.Core"               Version="$(Version)" />
-    <PackageReference Include="ChatCore.Persistence.EFCore" Version="$(Version)" />
-    <PackageReference Include="ChatCore.RealTime.SignalR"   Version="$(Version)" />
+    <ProjectReference Include="..\ChatCore.Abstractions\ChatCore.Abstractions.csproj" />
+    <ProjectReference Include="..\ChatCore.Core\ChatCore.Core.csproj" />
+    <ProjectReference Include="..\ChatCore.Persistence.EFCore\ChatCore.Persistence.EFCore.csproj" />
+    <ProjectReference Include="..\ChatCore.RealTime.SignalR\ChatCore.RealTime.SignalR.csproj" />
   </ItemGroup>
 
   <ItemGroup>
