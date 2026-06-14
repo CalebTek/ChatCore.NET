@@ -12,8 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ChatCore.Abstractions"             Version="$(Version)" />
-    <PackageReference Include="ChatCore.Persistence.EFCore"       Version="$(Version)" />
+    <ProjectReference Include="..\ChatCore.Abstractions\ChatCore.Abstractions.csproj" />
+    <ProjectReference Include="..\ChatCore.Persistence.EFCore\ChatCore.Persistence.EFCore.csproj" />
   </ItemGroup>
 
   <ItemGroup>
