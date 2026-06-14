@@ -6,7 +6,6 @@
     <Description>ASP.NET Core integration package for ChatCore.NET. Provides the AddChatCore() fluent builder (UseEntityFramework, UseSignalR, AddInterceptor), MapChatHub() endpoint mapping, and UseChatCoreExceptionHandler() global exception middleware. This is the only package most host applications need to reference directly.</Description>
   </PropertyGroup>
 
-  <!-- ASP.NET Core shared framework — not a standalone NuGet package on net8 -->
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
@@ -19,8 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)..\..\README.md" Pack="true" PackagePath="\" />
-    <None Include="$(MSBuildThisFileDirectory)..\..\icon.png"  Pack="true" PackagePath="\" Condition="Exists('$(MSBuildThisFileDirectory)..\..\icon.png')" />
+    <None Include="$(MSBuildThisFileDirectory)..\..\..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="$(MSBuildThisFileDirectory)..\..\..\..\icon.png"  Pack="true" PackagePath="\" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\icon.png')" />
   </ItemGroup>
 
 </Project>
