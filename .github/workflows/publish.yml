@@ -3,8 +3,8 @@ name: Publish to NuGet
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"        # v1.0.0, v1.2.3 — strict semver only
-      - "v[0-9]+.[0-9]+.[0-9]+-*"      # v1.0.0-beta.1 — pre-release
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-*"
 
 jobs:
   publish:
@@ -12,14 +12,14 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      id-token: write   # required for NuGet Trusted Publishing (OIDC)
+      id-token: write
       contents: read
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0    # full history required for Source Link
+          fetch-depth: 0
 
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
@@ -28,7 +28,6 @@ jobs:
 
       - name: Extract version from tag
         id: version
-        # Strip leading 'v': v1.0.0 → 1.0.0
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
       - name: Restore
@@ -64,18 +63,34 @@ jobs:
               --output ./nupkgs
           done
 
-      - name: Push to NuGet.org (Trusted Publishing / OIDC)
+      # Trusted Publishing: exchange the GitHub OIDC token for a NuGet API token
+      - name: Get NuGet API token via Trusted Publishing
+        id: nuget-token
+        run: |
+          OIDC_TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=api://AzureADTokenExchange" | \
+            python3 -c "import sys,json; print(json.load(sys.stdin)['value'])")
+
+          NUGET_TOKEN=$(curl -s -X POST "https://www.nuget.org/api/v1/trusted-publisher/github-actions/token" \
+            -H "Content-Type: application/json" \
+            -d "{\"oidcToken\": \"$OIDC_TOKEN\"}" | \
+            python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
+
+          echo "::add-mask::$NUGET_TOKEN"
+          echo "NUGET_TOKEN=$NUGET_TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Push packages to NuGet.org
         run: |
           dotnet nuget push "./nupkgs/*.nupkg" \
             --source https://api.nuget.org/v3/index.json \
-            --api-key oidc \
+            --api-key ${{ steps.nuget-token.outputs.NUGET_TOKEN }} \
             --skip-duplicate
 
       - name: Push symbol packages
         run: |
           dotnet nuget push "./nupkgs/*.snupkg" \
             --source https://api.nuget.org/v3/index.json \
-            --api-key oidc \
+            --api-key ${{ steps.nuget-token.outputs.NUGET_TOKEN }} \
             --skip-duplicate
 
       - name: Upload packages as artifact
