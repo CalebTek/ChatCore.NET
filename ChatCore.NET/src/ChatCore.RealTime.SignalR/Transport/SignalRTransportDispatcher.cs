@@ -4,33 +4,41 @@ using ChatCore.Abstractions.Domain.Entities;
 using ChatCore.Abstractions.Repositories;
 using ChatCore.Abstractions.Transport;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ChatCore.RealTime.SignalR.Hubs;
 
 /// <summary>
 /// SignalR implementation of <see cref="ITransportDispatcher"/>.
 /// </summary>
+/// <remarks>
+/// Injects <see cref="IServiceScopeFactory"/> instead of scoped repositories directly.
+/// <see cref="DispatchAsync"/> is called from a fire-and-forget <c>Task.Run</c> in
+/// <c>ChatEngine.SendAsync</c>, which runs after the originating HTTP request scope has
+/// been disposed. Creating a fresh DI scope here ensures the <c>ChatCoreDbContext</c>
+/// used to resolve excluded connection IDs is always live regardless of when the task runs.
+/// </remarks>
 public class SignalRTransportDispatcher : ITransportDispatcher
 {
-    private readonly IHubContext<ChatHub>         _hubContext;
-    private readonly IUserConnectionRepository    _connections;
+    private readonly IHubContext<ChatHub>              _hubContext;
+    private readonly IServiceScopeFactory              _scopeFactory;
     private readonly ILogger<SignalRTransportDispatcher> _logger;
 
     public SignalRTransportDispatcher(
-        IHubContext<ChatHub>              hubContext,
-        IUserConnectionRepository         connections,
+        IHubContext<ChatHub>               hubContext,
+        IServiceScopeFactory               scopeFactory,
         ILogger<SignalRTransportDispatcher> logger)
     {
-        _hubContext  = hubContext;
-        _connections = connections;
-        _logger      = logger;
+        _hubContext   = hubContext;
+        _scopeFactory = scopeFactory;
+        _logger       = logger;
     }
 
     public async Task DispatchAsync(
-        ChatMessage message,
-        Guid        conversationId,
-        Guid        tenantId,
-        Guid?       excludeUserId     = null,
+        ChatMessage       message,
+        Guid              conversationId,
+        Guid              tenantId,
+        Guid?             excludeUserId     = null,
         CancellationToken cancellationToken = default)
     {
         try
@@ -50,8 +58,16 @@ public class SignalRTransportDispatcher : ITransportDispatcher
 
             if (excludeUserId.HasValue)
             {
-                var excludedConnections  = await _connections.GetByUserIdAsync(excludeUserId.Value, cancellationToken);
-                var excludedConnectionIds = excludedConnections.Select(c => c.ConnectionId).ToList();
+                // Create a fresh scope so DbContext is always live even when called
+                // from a fire-and-forget Task.Run after the request scope is disposed.
+                await using var scope       = _scopeFactory.CreateAsyncScope();
+                var             connections = scope.ServiceProvider
+                                                 .GetRequiredService<IUserConnectionRepository>();
+
+                var excludedConnectionIds = (await connections.GetByUserIdAsync(
+                                                excludeUserId.Value, cancellationToken))
+                                            .Select(c => c.ConnectionId)
+                                            .ToList();
 
                 if (excludedConnectionIds.Count > 0)
                 {
@@ -61,6 +77,7 @@ public class SignalRTransportDispatcher : ITransportDispatcher
                 }
                 else
                 {
+                    // Excluded user has no active connections — broadcast to everyone
                     await _hubContext.Clients.Group(groupName)
                         .SendAsync("MessageReceived", messageData, cancellationToken);
                 }
