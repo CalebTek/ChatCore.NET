@@ -13,7 +13,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore"          Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
-    <!-- Tools package is design-time only — not shipped to consumers -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools"    Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -21,8 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)..\..\README.md" Pack="true" PackagePath="\" />
-    <None Include="$(MSBuildThisFileDirectory)..\..\icon.png"  Pack="true" PackagePath="\" Condition="Exists('$(MSBuildThisFileDirectory)..\..\icon.png')" />
+    <None Include="$(MSBuildThisFileDirectory)..\..\..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="$(MSBuildThisFileDirectory)..\..\..\..\icon.png"  Pack="true" PackagePath="\" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\icon.png')" />
   </ItemGroup>
 
 </Project>
