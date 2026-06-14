@@ -16,6 +16,13 @@ public class Participant
     public Guid UserId { get; private set; }
 
     /// <summary>
+    /// Gets the tenant identifier.
+    /// Required so the foreign key to <see cref="Conversation"/> can reference
+    /// the composite primary key (Id, TenantId) and enforce tenant isolation.
+    /// </summary>
+    public Guid TenantId { get; private set; }
+
+    /// <summary>
     /// Gets the timestamp when the user joined.
     /// </summary>
     public DateTime JoinedAt { get; private set; }
@@ -23,14 +30,12 @@ public class Participant
     /// <summary>
     /// Initializes a new instance of the <see cref="Participant"/> class.
     /// </summary>
-    /// <param name="conversationId">The conversation identifier.</param>
-    /// <param name="userId">The user identifier.</param>
-    /// <param name="joinedAt">The join timestamp.</param>
-    public Participant(Guid conversationId, Guid userId, DateTime joinedAt)
+    public Participant(Guid conversationId, Guid userId, Guid tenantId, DateTime joinedAt)
     {
         ConversationId = conversationId;
-        UserId = userId;
-        JoinedAt = joinedAt;
+        UserId         = userId;
+        TenantId       = tenantId;
+        JoinedAt       = joinedAt;
     }
 
     /// <summary>
