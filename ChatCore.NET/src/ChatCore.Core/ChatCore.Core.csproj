@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ChatCore.Abstractions" Version="$(Version)" />
+    <ProjectReference Include="..\ChatCore.Abstractions\ChatCore.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>
