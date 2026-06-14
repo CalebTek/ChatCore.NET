@@ -1,23 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <PackageId>ChatCore.RealTime.SignalR</PackageId>
     <Title>ChatCore.NET SignalR</Title>
     <Description>ASP.NET Core SignalR real-time transport for ChatCore.NET. Provides ChatHub (send, mark-as-read, join/leave conversations, typing indicators), SignalRTransportDispatcher with proper sender exclusion via GroupExcept, and DatabasePresenceProvider for online/offline tracking.</Description>
   </PropertyGroup>
-
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\ChatCore.Abstractions\ChatCore.Abstractions.csproj" />
     <ProjectReference Include="..\ChatCore.Persistence.EFCore\ChatCore.Persistence.EFCore.csproj" />
   </ItemGroup>
-
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)..\..\..\..\README.md" Pack="true" PackagePath="\" />
-    <None Include="$(MSBuildThisFileDirectory)..\..\..\..\icon.png"  Pack="true" PackagePath="\" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\icon.png')" />
+    <None Include="$(MSBuildThisFileDirectory)..\..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="$(MSBuildThisFileDirectory)..\..\..\icon.png"  Pack="true" PackagePath="\" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\icon.png')" />
   </ItemGroup>
-
 </Project>
