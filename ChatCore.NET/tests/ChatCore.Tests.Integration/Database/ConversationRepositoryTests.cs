@@ -9,7 +9,7 @@ using Xunit;
 
 public class ConversationRepositoryTests : IAsyncLifetime
 {
-    private ChatCoreDbContext    _context    = null!;
+    private ChatCoreDbContext      _context    = null!;
     private ConversationRepository _repository = null!;
 
     public async Task InitializeAsync()
@@ -74,7 +74,7 @@ public class ConversationRepositoryTests : IAsyncLifetime
         var userId         = Guid.NewGuid();
 
         await _repository.CreateAsync(new Conversation(conversationId, ConversationType.Direct, tenantId, DateTime.UtcNow));
-        _context.Participants.Add(new Participant(conversationId, userId, DateTime.UtcNow));
+        _context.Participants.Add(new Participant(conversationId, userId, tenantId, DateTime.UtcNow));
         await _context.SaveChangesAsync();
 
         var result = await _repository.IsUserParticipantAsync(conversationId, userId, tenantId);
@@ -103,7 +103,7 @@ public class ConversationRepositoryTests : IAsyncLifetime
         var otherUserId    = Guid.NewGuid();
 
         await _repository.CreateAsync(new Conversation(conversationId, ConversationType.Direct, tenantId, DateTime.UtcNow));
-        _context.Participants.Add(new Participant(conversationId, otherUserId, DateTime.UtcNow));
+        _context.Participants.Add(new Participant(conversationId, otherUserId, tenantId, DateTime.UtcNow));
         await _context.SaveChangesAsync();
 
         var result = await _repository.IsUserParticipantAsync(conversationId, Guid.NewGuid(), tenantId);
@@ -120,14 +120,12 @@ public class ConversationRepositoryTests : IAsyncLifetime
     {
         var tenantId = Guid.NewGuid();
         var userId   = Guid.NewGuid();
-
         var myConvId    = Guid.NewGuid();
         var otherConvId = Guid.NewGuid();
 
         await _repository.CreateAsync(new Conversation(myConvId,    ConversationType.Direct, tenantId, DateTime.UtcNow));
         await _repository.CreateAsync(new Conversation(otherConvId, ConversationType.Group,  tenantId, DateTime.UtcNow));
-
-        _context.Participants.Add(new Participant(myConvId, userId, DateTime.UtcNow));
+        _context.Participants.Add(new Participant(myConvId, userId, tenantId, DateTime.UtcNow));
         await _context.SaveChangesAsync();
 
         var result = (await _repository.GetByUserIdAsync(userId, tenantId, 0, 20)).ToList();
@@ -145,9 +143,8 @@ public class ConversationRepositoryTests : IAsyncLifetime
         for (int i = 0; i < 5; i++)
         {
             var convId = Guid.NewGuid();
-            await _repository.CreateAsync(new Conversation(convId, ConversationType.Group, tenantId,
-                DateTime.UtcNow.AddMinutes(i)));
-            _context.Participants.Add(new Participant(convId, userId, DateTime.UtcNow));
+            await _repository.CreateAsync(new Conversation(convId, ConversationType.Group, tenantId, DateTime.UtcNow.AddMinutes(i)));
+            _context.Participants.Add(new Participant(convId, userId, tenantId, DateTime.UtcNow));
         }
         await _context.SaveChangesAsync();
 
@@ -165,14 +162,14 @@ public class ConversationRepositoryTests : IAsyncLifetime
         var tenantA = Guid.NewGuid();
         var tenantB = Guid.NewGuid();
         var userId  = Guid.NewGuid();
+        var convA   = Guid.NewGuid();
+        var convB   = Guid.NewGuid();
 
-        var convA = Guid.NewGuid();
-        var convB = Guid.NewGuid();
         await _repository.CreateAsync(new Conversation(convA, ConversationType.Direct, tenantA, DateTime.UtcNow));
         await _repository.CreateAsync(new Conversation(convB, ConversationType.Direct, tenantB, DateTime.UtcNow));
         _context.Participants.AddRange(
-            new Participant(convA, userId, DateTime.UtcNow),
-            new Participant(convB, userId, DateTime.UtcNow));
+            new Participant(convA, userId, tenantA, DateTime.UtcNow),
+            new Participant(convB, userId, tenantB, DateTime.UtcNow));
         await _context.SaveChangesAsync();
 
         var resultA = (await _repository.GetByUserIdAsync(userId, tenantA, 0, 20)).ToList();
@@ -201,19 +198,15 @@ public class ConversationRepositoryTests : IAsyncLifetime
         await _repository.CreateAsync(new Conversation(convId1, ConversationType.Direct, tenantId, DateTime.UtcNow));
         await _repository.CreateAsync(new Conversation(convId2, ConversationType.Group,  tenantId, DateTime.UtcNow));
         _context.Participants.AddRange(
-            new Participant(convId1, user1, DateTime.UtcNow),
-            new Participant(convId1, user2, DateTime.UtcNow),
-            new Participant(convId2, user3, DateTime.UtcNow));
+            new Participant(convId1, user1, tenantId, DateTime.UtcNow),
+            new Participant(convId1, user2, tenantId, DateTime.UtcNow),
+            new Participant(convId2, user3, tenantId, DateTime.UtcNow));
         await _context.SaveChangesAsync();
 
-        var map = await _repository.GetParticipantIdsByConversationIdsAsync(
-            new[] { convId1, convId2 });
+        var map = await _repository.GetParticipantIdsByConversationIdsAsync(new[] { convId1, convId2 });
 
-        Assert.True(map.ContainsKey(convId1));
         Assert.Contains(user1, map[convId1]);
         Assert.Contains(user2, map[convId1]);
-
-        Assert.True(map.ContainsKey(convId2));
         Assert.Contains(user3, map[convId2]);
     }
 
@@ -221,16 +214,13 @@ public class ConversationRepositoryTests : IAsyncLifetime
     public async Task GetParticipantIdsByConversationIdsAsync_EmptyInput_ReturnsEmptyDictionary()
     {
         var map = await _repository.GetParticipantIdsByConversationIdsAsync(Array.Empty<Guid>());
-
         Assert.Empty(map);
     }
 
     [Fact]
     public async Task GetParticipantIdsByConversationIdsAsync_UnknownIds_AreOmitted()
     {
-        var map = await _repository.GetParticipantIdsByConversationIdsAsync(
-            new[] { Guid.NewGuid(), Guid.NewGuid() });
-
+        var map = await _repository.GetParticipantIdsByConversationIdsAsync(new[] { Guid.NewGuid() });
         Assert.Empty(map);
     }
 
