@@ -162,12 +162,14 @@ public class DomainModelTests
     {
         var conversationId = Guid.NewGuid();
         var userId         = Guid.NewGuid();
+        var tenantId       = Guid.NewGuid();
         var now            = DateTime.UtcNow;
 
-        var participant = new Participant(conversationId, userId, now);
+        var participant = new Participant(conversationId, userId, tenantId, now);
 
         Assert.Equal(conversationId, participant.ConversationId);
         Assert.Equal(userId,         participant.UserId);
+        Assert.Equal(tenantId,       participant.TenantId);
         Assert.Equal(now,            participant.JoinedAt);
     }
 
@@ -189,3 +191,4 @@ public class DomainModelTests
         Assert.Equal(now,          connection.ConnectedAt);
     }
 }
+
