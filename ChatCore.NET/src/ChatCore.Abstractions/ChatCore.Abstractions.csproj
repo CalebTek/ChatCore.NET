@@ -1,14 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <PackageId>ChatCore.Abstractions</PackageId>
     <Title>ChatCore.NET Abstractions</Title>
     <Description>Core domain models, repository interfaces, and contracts for ChatCore.NET. Reference this package to build custom storage or transport providers, or to consume ChatCore types in a host project without pulling in any infrastructure dependencies.</Description>
   </PropertyGroup>
-
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)..\..\..\..\README.md" Pack="true" PackagePath="\" />
-    <None Include="$(MSBuildThisFileDirectory)..\..\..\..\icon.png"  Pack="true" PackagePath="\" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\icon.png')" />
+    <None Include="$(MSBuildThisFileDirectory)..\..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="$(MSBuildThisFileDirectory)..\..\..\icon.png"  Pack="true" PackagePath="\" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\icon.png')" />
   </ItemGroup>
-
 </Project>
