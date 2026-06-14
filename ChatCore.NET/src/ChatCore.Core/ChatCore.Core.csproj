@@ -1,18 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <PackageId>ChatCore.Core</PackageId>
     <Title>ChatCore.NET Core</Title>
     <Description>Core ChatEngine implementation for ChatCore.NET. Orchestrates message send, delivery, read receipts, pagination, and soft delete through a pluggable interceptor pipeline. Depends on ChatCore.Abstractions; pair with a storage and transport package to get a complete runtime.</Description>
   </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\ChatCore.Abstractions\ChatCore.Abstractions.csproj" />
   </ItemGroup>
-
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)..\..\..\..\README.md" Pack="true" PackagePath="\" />
-    <None Include="$(MSBuildThisFileDirectory)..\..\..\..\icon.png"  Pack="true" PackagePath="\" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\icon.png')" />
+    <None Include="$(MSBuildThisFileDirectory)..\..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="$(MSBuildThisFileDirectory)..\..\..\icon.png"  Pack="true" PackagePath="\" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\icon.png')" />
   </ItemGroup>
-
 </Project>
